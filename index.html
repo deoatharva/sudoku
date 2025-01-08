@@ -70,6 +70,12 @@
         .controls button:active {
             transform: translateY(0);
         }
+        #message {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -78,11 +84,33 @@
         <div class="controls">
             <button class="btn btn-primary" onclick="clearBoard()">Clear</button>
             <button class="btn btn-success" onclick="generatePuzzle()">New Puzzle</button>
+            <button class="btn btn-warning" onclick="toggleMusic()" id="musicButton">Play Music</button>
+            <button class="btn btn-info" onclick="checkSolution()">Check Solution</button>
         </div>
+        <div id="message"></div>
     </div>
+
+    <!-- Audio Elements -->
+    <audio id="backgroundMusic" loop>
+        <source src="audio.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="winSound">
+        <source src="win.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="loseSound">
+        <source src="lose.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
 
     <script>
         const sudokuContainer = document.getElementById('sudoku-container');
+        const music = document.getElementById('backgroundMusic');
+        const winSound = document.getElementById('winSound');
+        const loseSound = document.getElementById('loseSound');
+        const musicButton = document.getElementById('musicButton');
+        const message = document.getElementById('message');
 
         // Create the Sudoku grid
         function createGrid() {
@@ -113,6 +141,7 @@
             document.querySelectorAll('.cell').forEach(cell => {
                 cell.value = '';
             });
+            message.textContent = '';
         }
 
         // Generate a simple puzzle (for demonstration purposes)
@@ -143,6 +172,77 @@
                     cells[i].style.backgroundColor = '#fff';
                 }
             }
+        }
+
+        // Toggle music playback
+        function toggleMusic() {
+            if (music.paused) {
+                music.play();
+                musicButton.textContent = 'Pause Music';
+            } else {
+                music.pause();
+                musicButton.textContent = 'Play Music';
+            }
+        }
+
+        // Check solution for win or lose
+        function checkSolution() {
+            const cells = document.querySelectorAll('.cell');
+            const board = [];
+
+            for (let i = 0; i < 9; i++) {
+                board.push([]);
+                for (let j = 0; j < 9; j++) {
+                    const value = cells[i * 9 + j].value;
+                    board[i].push(value ? parseInt(value, 10) : 0);
+                }
+            }
+
+            if (isSolved(board)) {
+                message.textContent = 'Congratulations! You solved it!';
+                message.style.color = 'green';
+                winSound.play();
+            } else {
+                message.textContent = 'Incorrect solution. Try again!';
+                message.style.color = 'red';
+                loseSound.play();
+            }
+        }
+
+        // Check if the board is solved correctly
+        function isSolved(board) {
+            for (let i = 0; i < 9; i++) {
+                if (!isValidLine(board[i]) || !isValidLine(board.map(row => row[i]))) {
+                    return false;
+                }
+            }
+
+            for (let row = 0; row < 9; row += 3) {
+                for (let col = 0; col < 9; col += 3) {
+                    const block = [];
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            block.push(board[row + i][col + j]);
+                        }
+                    }
+                    if (!isValidLine(block)) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        // Validate a single row, column, or block
+        function isValidLine(line) {
+            const seen = new Set();
+            for (const num of line) {
+                if (num === 0) return false;
+                if (seen.has(num)) return false;
+                seen.add(num);
+            }
+            return true;
         }
 
         // Initialize the Sudoku grid
